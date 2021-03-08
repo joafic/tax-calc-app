@@ -10,14 +10,49 @@
     </template>
     <template #content>
       <div class="p-fluid p-formgrid p-grid">
-          <div class="p-field p-col">
-              <label for="field1">Valor</label>
-              <InputText id="field1" type="text" class="p-inputtext-sm"/>
+        <div class="p-grid p-col-6">
+          <label for="vl_boleto" class="p-col-5">Valor do boleto:</label>
+          <div class="p-field p-col p-md-5">
+                
+                <InputNumber id="vl_boleto" class="p-inputtext-sm" 
+                mode="currency" 
+                currency="BRL" 
+                currencyDisplay="symbol" 
+                locale="pt-BR" 
+                minFractionDigits="2" 
+                placeholder="R$ Ex: 200,00"/>
           </div>
-          <div class="p-field p-col">
-              <label for="field2">Valor máximo</label>
-              <InputText id="field2" type="text" class="p-inputtext-sm"/>
+        </div>
+        
+        
+        <div class="p-grid p-col-6">
+          <label for="vl_boleto" class="p-col-7">Valor máximo de cashback:</label>
+          <div class="p-field p-col p-md-5">
+                
+                <InputNumber id="vl_boleto" class="p-inputtext-sm" 
+                mode="currency" 
+                currency="BRL" 
+                currencyDisplay="symbol" 
+                locale="pt-BR" 
+                minFractionDigits="2" 
+                placeholder="R$ Ex: 200,00"/>
           </div>
+        </div>
+      </div>
+
+      <div class="p-fluid p-formgrid p-grid">
+        <div class="p-field p-col p-md-5">
+            <span class="p-float-label">
+              <label for="username" class="p-col">Quantidade de parcelas:</label>
+              <InputText id="username" type="text" class="p-inputtext-sm" placeholder="Ex: 2"/>
+          </span>
+        </div>
+        <div class="p-field p-col ">
+          <span class="p-float-label">
+            <label for="username" class="p-col">Username</label>
+            <InputText id="username" type="text"  class="p-inputtext-sm"/>
+          </span>
+        </div>
       </div>
     </template>
     <template #footer>

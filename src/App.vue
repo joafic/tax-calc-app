@@ -119,7 +119,7 @@
      </div>
     </template>
     <template #footer>
-        <Button icon="pi pi-check" label="Calcular" />
+        <Button icon="pi pi-check" label="Calcular" @click="calc"/>
         <Button icon="pi pi-circle-off" label="Limpar" class="p-button-secondary" style="margin-left: .5em" />
     </template>
 </Card>
@@ -141,7 +141,14 @@ setup(){
   const parcel = ref(0);
   const percent = ref(0);
 
-  return {a,severity, boleto,max_cashback,parcel,percent}
+  const calc = () => {
+    console.log(boleto.value)
+    console.log(max_cashback.value)
+    console.log(parcel.value)
+    console.log(percent.value)
+  }
+
+  return {a,severity, boleto,max_cashback,parcel,percent,calc}
 }
 }
 

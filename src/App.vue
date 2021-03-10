@@ -87,38 +87,38 @@
               Taxa de pagamento de boleto utilizando cartão
              <small class="p-d-block">This is some smaller text.</small>
               </td>
-            <th>2.99%</th>
+            <th>R$ {{cardFee.toFixed(2)}}</th>
           </tr>
           <tr>
             <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="teste dsc"></i></td>
-            <th>R$ 1564.1</th>
+            <th>R$ {{installmentFee.toFixed(2)}}</th>
           </tr>
           <tr>
             <td>Valor da parcela</td>
-            <th>2x R$ 456,54</th>
+            <th>{{parcel}}x R$ {{installment}}</th>
           </tr>
           <tr>
             <td>Valor total do boleto parcelado</td>
-            <th>R$ 23423</th>
+            <th>R$ {{installment * parcel}}</th>
           </tr>
           <tr>
             <td>Valor de cashback a receber</td>
-            <th>R$ 323</th>
+            <th>R$ {{cashback.toFixed(2)}}</th>
           </tr>
           </tbody>
           <tfoot>
             <tr>
             <td colspan="2">
               <!--<span><Tag :severity="'success'" :rounded="true">1234,00 - 4.564,00 = R$5.464,00</Tag></span>-->
-                <Message :severity="severity" :closable=false>{{max_cashback}}</Message>
+                <Message :severity="result.severity" :closable=false>{{`${result.msg} R$ ${result.diff !=0 ? (result.diff).toFixed(2): ''}`}}</Message>
               </td>
             </tr>
           </tfoot>
-          
+
         </table>
      </div>
     </template>
-    <template #footer>
+    <template #footer style="margin-top:2em">
         <Button icon="pi pi-check" label="Calcular" @click="calc"/>
         <Button icon="pi pi-circle-off" label="Limpar" class="p-button-secondary" style="margin-left: .5em" />
     </template>
@@ -134,21 +134,54 @@ export default {
   name: 'App',
 
 setup(){
+  const parcelFee = 3.49/100; //3,49%
+  const picpayFee = 2.99/100; //2,99%
   const a = ref('text');
-  const severity = ref('success');
-  const boleto = ref(0);
+  const result = ref({severity:'',msg:'Aguardando cálculo',diff:0});
+  const boleto = ref(1604.00);
   const max_cashback = ref(0);
-  const parcel = ref(0);
-  const percent = ref(0);
+  const parcel = ref(2);
+  const percent = ref(10);
+  const cardFee = ref(0);
+  const installment = ref(0);
+  const totalWithFees = ref(0);
+  const installmentFee = ref(0);
+  const cashback = ref(0);
 
   const calc = () => {
-    console.log(boleto.value)
-    console.log(max_cashback.value)
-    console.log(parcel.value)
-    console.log(percent.value)
+    //juros ao pagar com cartão
+    cardFee.value = boleto.value * picpayFee;
+
+    //total a ser parcelado incuindo taxa do cartão
+    const value = parseFloat((boleto.value + cardFee.value).toFixed(2))
+
+    //total do boleto com as taxas
+    totalWithFees.value = (value * parcelFee / (1 - Math.pow(1 + parcelFee, -parcel.value)) * parcel.value).toFixed(2);
+
+    //parcela do cartão
+    installment.value = (totalWithFees.value / parcel.value).toFixed(2);
+
+    //juros de parcelamento
+    installmentFee.value = (totalWithFees.value - value);
+
+    //cashback 
+    cashback.value = (totalWithFees.value * percent.value/100);
+
+    console.log(parseFloat( cardFee.value) + parseFloat(installmentFee.value))
+
+    result.value.diff = cashback.value - (installmentFee.value+cardFee.value)
+
+    if(result.value.diff > 0){
+      result.value.severity = 'success'
+      result.value.msg = 'O valor de cashback é superior ao valor das taxas!'
+    }else{
+      result.value.severity = 'error'
+      result.value.msg = 'O valor das taxas é superior ao valor de cashback.'
+    }
+
   }
 
-  return {a,severity, boleto,max_cashback,parcel,percent,calc}
+  return {a, boleto,max_cashback,parcel,percent,calc,cardFee,installment,totalWithFees,installmentFee,cashback,result}
 }
 }
 
@@ -189,6 +222,9 @@ tr:nth-child(even) {
 
 .p-message .p-message-icon{
     display: none;
+}
+.p-card .p-card-footer{
+  padding: 45em 0 0 0;
 }
 small {
   font-size: .8em ;

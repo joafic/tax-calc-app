@@ -70,7 +70,7 @@
                v-model="percent"
                mode="decimal" 
                showButtons 
-               :min="2" 
+               :min="0" 
                :max="100"
                suffix="%"
                placeholder="Ex: 20"
@@ -85,12 +85,13 @@
           <tr>
             <td>
               Taxa de pagamento de boleto utilizando cartão
-             <small class="p-d-block">This is some smaller text.</small>
+             <small class="p-d-block">Taxa de 2,99%</small>
               </td>
             <th>R$ {{cardFee.toFixed(2)}}</th>
           </tr>
           <tr>
-            <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="teste dsc"></i></td>
+            <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="teste dsc"></i>
+            <small class="p-d-block">Taxa de 3,49% por parcela.</small></td>
             <th>R$ {{installmentFee.toFixed(2)}}</th>
           </tr>
           <tr>
@@ -129,7 +130,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 export default {
   name: 'App',
 
@@ -148,7 +149,14 @@ setup(){
   const installmentFee = ref(0);
   const cashback = ref(0);
 
+  watch([parcel,percent],function(){
+    if(parcel.value > 1){
+      calc();
+    }
+    });
+
   const calc = () => {
+    
     //juros ao pagar com cartão
     cardFee.value = boleto.value * picpayFee;
 

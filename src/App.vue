@@ -2,13 +2,11 @@
 <div class="p-grid p-jc-center">
   <div class="p-col-12 p-md-6 p-lg-6">
     <Card>
-    <template #header>
-        
-    </template>
+    
     <template #title>
        <div class="p-fluid p-formgrid p-grid ">
           <div class=" p-md-10 ">
-            <label for="vl_boleto" class="p-d-flex p-jc-end">{{a}}</label>
+            <label for="vl_boleto" class="p-d-flex p-jc-end">calc</label>
           </div>
           <div class=" p-md-2">
             <i class="pi pi-moon" title="teste dsc"></i>
@@ -19,9 +17,10 @@
     <template #content>
       <div class="p-fluid p-formgrid p-grid ">
           <div class="p-field p-col p-md-6 ">
-            <label for="vl_boleto" class=" p-d-flex p-ai-start">Valor do boleto:</label>
+            <label for="vl_boleto" class="p-d-flex p-ai-start">Valor do boleto:</label>
             <div class="p-md-12">
-               <InputNumber id="vl_boleto" class="p-inputtext-sm" 
+               <InputNumber id="vl_boleto" class="p-inputtext-sm"
+                :class="boleto ?? 'p-invalid'"
                 v-model="boleto"
                 mode="currency" 
                 currency="BRL" 
@@ -29,6 +28,7 @@
                 locale="pt-BR" 
                 :minFractionDigits="2" 
                 placeholder="R$ Ex: 200,00"/>
+                <small v-if="!boleto" class="p-d-flex p-ai-start p-error">Preencha o valor do boleto.</small>
             </div>
           </div>
           <div class="p-field p-col p-md-6">
@@ -48,7 +48,7 @@
       <div class="p-fluid p-formgrid p-grid">
         <div class="p-field p-col p-md-6">
            <label for="username" class="p-col-10 p-d-flex p-ai-start">Quantidade de parcelas:
-             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="teste dsc"></i>
+             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Juros de pare"></i>
            </label>
           <div class="p-md-12">
                <InputNumber id="vl_parcela" class="p-inputtext-sm" 
@@ -58,7 +58,7 @@
                :min="0" 
                :max="24" 
                incrementButtonIcon="pi pi-plus" 
-               decrementButtonIcon="pi pi-minus" />
+               decrementButtonIcon="pi pi-minus"/>
           </div>
         </div>
         <div class="p-field p-col p-md-6 ">
@@ -84,34 +84,34 @@
           <tbody>
           <tr>
             <td>
-              Taxa de pagamento de boleto utilizando cartão
+              Taxa de pagamento de boleto utilizando cartão de crédito
              <small class="p-d-block">Taxa de 2,99%</small>
               </td>
-            <th>R$ {{cardFee.toFixed(2)}}</th>
+            <th>{{result.values.cardFee || '-'}}</th>
           </tr>
           <tr>
             <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="teste dsc"></i>
             <small class="p-d-block">Taxa de 3,49% por parcela.</small></td>
-            <th>R$ {{installmentFee.toFixed(2)}}</th>
+            <th>{{result.values.installmentFee || '-'}}</th>
           </tr>
           <tr>
             <td>Valor da parcela</td>
-            <th>{{parcel}}x R$ {{installment}}</th>
+            <th>{{result.values.installment ? `${parcel}x ${result.values.installment}` : '-'}}</th>
           </tr>
           <tr>
             <td>Valor total do boleto parcelado</td>
-            <th>R$ {{installment * parcel}}</th>
+            <th>{{result.values.totalWithFees || '-'}}</th>
           </tr>
           <tr>
             <td>Valor de cashback a receber</td>
-            <th>R$ {{cashback.toFixed(2)}}</th>
+            <th>{{result.values.cashback || '-'}}</th>
           </tr>
           </tbody>
           <tfoot>
             <tr>
             <td colspan="2">
               <!--<span><Tag :severity="'success'" :rounded="true">1234,00 - 4.564,00 = R$5.464,00</Tag></span>-->
-                <Message :severity="result.severity" :closable=false>{{`${result.msg} R$ ${result.diff !=0 ? (result.diff).toFixed(2): ''}`}}</Message>
+                <Message :severity="result.severity" :closable=false>{{result.msg}}</Message>
               </td>
             </tr>
           </tfoot>
@@ -120,8 +120,9 @@
      </div>
     </template>
     <template #footer style="margin-top:2em">
-        <Button icon="pi pi-check" label="Calcular" @click="calc"/>
-        <Button icon="pi pi-circle-off" label="Limpar" class="p-button-secondary" style="margin-left: .5em" />
+      <!-- -->
+        <Button :disabled="!formState.isValid" icon="pi pi-check" label="Calcular" @click="calc"/>
+        <Button icon="pi pi-circle-off" label="Limpar" @click="reset" class="p-button-secondary" style="margin-left: .5em" />
     </template>
 </Card>
 </div>
@@ -130,17 +131,15 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+import { ref, watch, reactive } from 'vue';
 export default {
   name: 'App',
 
 setup(){
   const parcelFee = 3.49/100; //3,49%
   const picpayFee = 2.99/100; //2,99%
-  const a = ref('text');
-  const result = ref({severity:'',msg:'Aguardando cálculo',diff:0});
   const boleto = ref(1604.00);
-  const max_cashback = ref(0);
+  const max_cashback = ref();
   const parcel = ref(2);
   const percent = ref(10);
   const cardFee = ref(0);
@@ -148,26 +147,47 @@ setup(){
   const totalWithFees = ref(0);
   const installmentFee = ref(0);
   const cashback = ref(0);
+  const formState = ref({isValid:false,class:'p-invalid'});
+  const result = reactive({severity:'',msg:'Aguardando cálculo',values:{}})
 
-  watch([parcel,percent],function(){
-    if(parcel.value > 1){
-      calc();
+  watch([parcel,percent,boleto],function(){
+    calc();
+    //validateForm();
+  });
+
+  /**watch((formState) => {
+    if(boleto.value > 0 && parcel.value > 1 && percent.value > 0 ){
+      formState.value.isValid = true;
+      formState.value.class = '';
     }
-    });
+  })**/
+  
+  //validação do formulário
+  const validateForm = () => {
+    if(boleto.value > 0 && parcel.value > 1 && percent.value > 0 ){
+      console.log('fix here')
+      formState.value.isValid = true;
+      formState.value.class = '';
+    }else{
+      formState.value.isValid = false;
+      formState.value.class = 'p-invalid';
+    }
+    return formState;
+  }
 
   const calc = () => {
-    
-    //juros ao pagar com cartão
+    if(validateForm().value.isValid){
+      //juros ao pagar com cartão
     cardFee.value = boleto.value * picpayFee;
 
     //total a ser parcelado incuindo taxa do cartão
-    const value = parseFloat((boleto.value + cardFee.value).toFixed(2))
+    const value = parseFloat((boleto.value + cardFee.value).toFixed(2));
 
     //total do boleto com as taxas
-    totalWithFees.value = (value * parcelFee / (1 - Math.pow(1 + parcelFee, -parcel.value)) * parcel.value).toFixed(2);
+    totalWithFees.value = (value * parcelFee / (1 - Math.pow(1 + parcelFee, -parcel.value)) * parcel.value);
 
     //parcela do cartão
-    installment.value = (totalWithFees.value / parcel.value).toFixed(2);
+    installment.value = (totalWithFees.value / parcel.value);
 
     //juros de parcelamento
     installmentFee.value = (totalWithFees.value - value);
@@ -175,21 +195,37 @@ setup(){
     //cashback 
     cashback.value = (totalWithFees.value * percent.value/100);
 
-    console.log(parseFloat( cardFee.value) + parseFloat(installmentFee.value))
+    //diferencça de volor do cashback e taxas
+    result.diff = cashback.value - (installmentFee.value + cardFee.value);
 
-    result.value.diff = cashback.value - (installmentFee.value+cardFee.value)
+    //monta objeto de resultado
+    result.values.cardFee = cardFee.value;
+    result.values.cashback = cashback.value;
+    result.values.totalWithFees = totalWithFees.value;
+    result.values.installment = installment.value;
+    result.values.installmentFee = installmentFee.value;
+    result.values.diff = result.diff;
 
-    if(result.value.diff > 0){
-      result.value.severity = 'success'
-      result.value.msg = 'O valor de cashback é superior ao valor das taxas!'
+    Object.keys(result.values).map((key) => result.values[key] = "R$ " + parseFloat(result.values[key].toFixed(2)).toLocaleString())
+    
+    if(result.diff > 0){
+      result.severity = 'success'
+      result.msg = `O valor de cashback é superior ao valor das taxas! R$ ${result.values.diff} 🤑🤑`;
     }else{
-      result.value.severity = 'error'
-      result.value.msg = 'O valor das taxas é superior ao valor de cashback.'
+      result.severity = 'error'
+      result.msg = `O valor das taxas é superior ao valor de cashback. R$ ${result.values.diff}`;
     }
 
+    }
+    
+ 
+    
+    
   }
 
-  return {a, boleto,max_cashback,parcel,percent,calc,cardFee,installment,totalWithFees,installmentFee,cashback,result}
+  const reset = () => {console.log('reset triggered')}
+
+  return {boleto,max_cashback,parcel,percent,calc,result,reset,formState}
 }
 }
 
@@ -201,7 +237,6 @@ setup(){
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  margin-top: 50px;
   background: linear-gradient( rgba(04, 213, 146),rgba(4, 213, 49)) fixed;
 }
 table {

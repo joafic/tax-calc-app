@@ -10,6 +10,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Message from 'primevue/message';
 import Tag from 'primevue/tag';
+import InputSwitch from 'primevue/inputswitch';
 
 import 'primevue/resources/themes/saga-green/theme.css'
 import 'primeicons/primeicons.css'
@@ -26,6 +27,7 @@ app.component('DataTable', DataTable);
 app.component('Column', Column);
 app.component('Message', Message);
 app.component('Tag', Tag);
+app.component('InputSwitch', InputSwitch);
 
 
 app.mount('#app')

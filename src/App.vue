@@ -9,7 +9,7 @@
             <label for="vl_boleto" class="p-d-flex p-jc-end">calc</label>
           </div>
           <div class=" p-md-2">
-            <i class="pi pi-moon" title="teste dsc"></i>
+            <i class="pi pi-moon" title="Dark mode"></i>
           </div>
       </div>
 
@@ -20,8 +20,8 @@
             <label for="vl_boleto" class="p-d-flex p-ai-start">Valor do boleto:</label>
             <div class="p-md-12">
                <InputNumber id="vl_boleto" class="p-inputtext-sm"
-                :class="boleto ?? 'p-invalid'"
-                v-on:change="calc"
+                :class="formState.class"
+                @keyup="setBoletoValue"
                 v-model="boleto"
                 mode="currency" 
                 currency="BRL" 
@@ -29,18 +29,21 @@
                 locale="pt-BR" 
                 :minFractionDigits="2" 
                 placeholder="R$ Ex: 200,00"/>
-                <small v-if="!boleto" class="p-d-flex p-ai-start p-error">Preencha o valor do boleto.</small>
+                <small v-if="!formState.isValid" class="p-d-flex p-ai-start p-error">{{formState.msg}}</small>
             </div>
           </div>
-          <div class="p-field p-col p-md-6">
-             <label for="vl_boleto" class="p-col-10 p-d-flex p-ai-start">Valor máximo de cashback da promoção:</label>
+          <div class="p-field p-col p-md-6 p-inputtext-sm">
+             <label for="vl_boleto" class="p-col-10 p-d-flex p-ai-start">Valor máximo de cashback:<span style="max-height:2em" class="p-col-1"><InputSwitch v-model="calcMax"/></span> </label>
               <div class="p-md-12">
                 <InputNumber id="max_cashback" class="p-inputtext-sm" 
                 v-model="max_cashback"
+                :disabled="!calcMax"
                 mode="currency" 
                 currency="BRL" 
                 currencyDisplay="symbol" 
-                locale="pt-BR" 
+                locale="pt-BR"
+                :max="5000"
+                :min="0"
                 :minFractionDigits="2" 
                 placeholder="R$ Ex: 200,00"/>
               </div>
@@ -49,7 +52,7 @@
       <div class="p-fluid p-formgrid p-grid">
         <div class="p-field p-col p-md-6">
            <label for="username" class="p-col-10 p-d-flex p-ai-start">Quantidade de parcelas:
-             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Juros de pare"></i>
+             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Parcelamento de 2 a 12 parcelas."></i>
            </label>
           <div class="p-md-12">
                <InputNumber id="vl_parcela" class="p-inputtext-sm" 
@@ -57,14 +60,14 @@
                mode="decimal" 
                showButtons 
                :min="2" 
-               :max="24" 
+               :max="12"
                incrementButtonIcon="pi pi-plus" 
                decrementButtonIcon="pi pi-minus"/>
           </div>
         </div>
         <div class="p-field p-col p-md-6 ">
            <label for="username" class="p-col-10 p-d-flex p-ai-start">Percentual de cashback:
-             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Percentual de cashback de acordo com a quantidade de parcelas"></i>
+             <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Percentual de cashback de acordo com a quantidade de parcelas informadas na promoção"></i>
            </label>
           <div class="p-md-12">
                <InputNumber id="percent" class="p-inputtext-sm" 
@@ -73,6 +76,7 @@
                showButtons 
                :min="0" 
                :max="100"
+               :step="5"
                suffix="%"
                placeholder="Ex: 20"
                incrementButtonIcon="pi pi-plus" 
@@ -91,7 +95,7 @@
             <th>{{result.values.cardFee || '-'}}</th>
           </tr>
           <tr>
-            <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="teste dsc"></i>
+            <td>Juros do parcelamento <i style="font-size:0.8em" class="pi pi-question-circle" title="Taxa de 3.49% a.m"></i>
             <small class="p-d-block">Taxa de 3,49% por parcela.</small></td>
             <th>{{result.values.installmentFee || '-'}}</th>
           </tr>
@@ -139,6 +143,7 @@ export default {
     const parcelFee = 3.49/100; //3,49%
     const picpayFee = 2.99/100; //2,99%
     const boleto = ref();
+    const calcMax = ref(false);
     const max_cashback = ref();
     const parcel = ref(2);
     const percent = ref(0);
@@ -147,34 +152,34 @@ export default {
     const totalWithFees = ref(0);
     const installmentFee = ref(0);
     const cashback = ref(0);
-    const formState = ref({isValid:false,class:'p-invalid'});
+    const formState = ref({isValid:false,class:'',msg:''});
     const result = reactive({severity:'info',msg:'Aguardando cálculo',values:{}})
 
     watch([parcel,percent,boleto],function(){
       calc();
-      //validateForm();
-      //console.log(validateForm())
     });
 
     //validação do formulário
     const validateForm = () => {
-      if(boleto.value > 0 && parcel.value > 1 && percent.value ){
-        
+      if(boleto.value > 0 && boleto.value < 5000 && parcel.value > 1 && percent.value ){
         formState.value.isValid = true;
         formState.value.class = '';
       }else{
+        formState.value.msg = boleto.value > 5000 ? "O valor do boleto não pode ser superior a R$5.000,00!" : '';
+        formState.value.class = boleto.value >5000 ? 'p-invalid' : '';
         formState.value.isValid = false;
-        formState.value.class = 'p-invalid';
-        resetState();
-        console.log(boleto.value);
+
+        result.severity = 'info';
+        result.msg = 'Aguardando cálculo';
+        result.values = {};
+        
       }
       return formState;
     }
 
     const calc = () => {
-      
       if(validateForm().value.isValid){
-        
+
         //juros ao pagar com cartão
         cardFee.value = boleto.value * picpayFee;
 
@@ -213,24 +218,24 @@ export default {
           result.severity = 'error'
           result.msg = `O valor das taxas é superior ao valor de cashback. ${result.values.diff}`;
         }
-
       }
       
     }
-    //const reset = ()=>{{resetState(); resetForm();}}
-    const resetState = () => {
-      result.severity = 'info';
-      result.msg = 'Aguardando cálculo';
-      result.values = {};
-    }
+
     const resetForm = () =>{
-      boleto.value = 0;
+      boleto.value = null;
       max_cashback.value = null;
       parcel.value = 2
       percent.value = null;
+      calcMax.value = false;
     }
 
-    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState}
+    //Para corrigir bind do componente, que só ativa quando perde foco do input
+    function setBoletoValue(e){
+       boleto.value = parseFloat(e.target.value.substring(3).replaceAll('.',''))
+    }
+
+    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setBoletoValue,calcMax}
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-<div class="p-grid p-jc-center">
+<div class="p-grid p-jc-center" :class="{'dark-mode': darkMode}">
   <div class="p-col-12 p-md-7 p-lg-6 p-sm-12">
     <Card>
     
@@ -8,8 +8,8 @@
           <div class=" p-md-10 ">
             <label for="vl_boleto" class="p-d-flex p-jc-end">calc</label>
           </div>
-          <div class=" p-md-2">
-            <i class="pi pi-moon" title="Dark mode"></i>
+          <div class="darkThemeBtn p-md-2">
+            <i :class="!darkMode? 'pi pi-moon': 'pi pi-sun'" style="fontSize: 1.5rem" title="Dark mode" @click="toggleDarkMode()"></i>
           </div>
       </div>
 
@@ -152,6 +152,7 @@ export default {
     const totalWithFees = ref(0);
     const installmentFee = ref(0);
     const cashback = ref(0);
+    const darkMode = ref(false);
     const formState = ref({isValid:false,class:'',msg:''});
     const result = reactive({severity:'info',msg:'Aguardando cálculo',values:{}})
 
@@ -235,7 +236,12 @@ export default {
        boleto.value = parseFloat(e.target.value.substring(3).replaceAll('.',''))
     }
 
-    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setBoletoValue,calcMax}
+    function toggleDarkMode(){
+      darkMode.value = !darkMode.value;
+    }
+    console.log(darkMode.value)
+
+    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setBoletoValue,calcMax,toggleDarkMode,darkMode}
   }
 }
 
@@ -272,7 +278,13 @@ th{
 tr:nth-child(even) {
   background-color: #f2f2f2;
 }
-
+.darkThemeBtn i{
+  cursor: pointer;
+}
+.dark-mode .p-card {
+  background: rgb(32, 32, 32) !important;
+  color:rgb(197, 197, 197)
+}
 .p-message .p-message-icon {
     display: none;
 }

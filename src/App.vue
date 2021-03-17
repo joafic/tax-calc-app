@@ -239,7 +239,6 @@ export default {
     function toggleDarkMode(){
       darkMode.value = !darkMode.value;
     }
-    console.log(darkMode.value)
 
     return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setBoletoValue,calcMax,toggleDarkMode,darkMode}
   }
@@ -255,6 +254,7 @@ export default {
   text-align: center;
   background: linear-gradient( rgba(04, 213, 146),rgba(4, 213, 49)) fixed;
 }
+
 table {
   border-collapse: collapse;
   border-style: hidden;
@@ -268,9 +268,11 @@ th, td {
   padding: 7px;
   border: 1px solid #ddd;
 }
+
 td{
   width: 69%;
 }
+
 th{
   text-align: start;
 }
@@ -278,25 +280,79 @@ th{
 tr:nth-child(even) {
   background-color: #f2f2f2;
 }
-.darkThemeBtn i{
-  cursor: pointer;
-}
-.dark-mode .p-card {
-  background: rgb(32, 32, 32) !important;
-  color:rgb(197, 197, 197)
-}
+
 .p-message .p-message-icon {
     display: none;
 }
+
 .p-message.p-message-info {
   background: #f0f6f903 !important;
   color: #3d3d3d !important;
 }
+
 .p-card .p-card-footer{
   padding: 45em 0 0 0;
 }
+
 small {
   font-size: .8em ;
-  color:  #495057;
+  color:  #495057c7;
+}
+
+/* DARK MODE */
+.darkThemeBtn i{
+  cursor: pointer;
+}
+
+.dark-mode .p-card, .dark-mode .p-inputtext{
+  color: rgb(181, 175, 166);
+}
+
+.dark-mode .p-card, .dark-mode .p-inputtext{
+  background:#161616 !important;
+}
+
+.dark-mode .p-inputtext {
+  border-color: rgba(161, 160, 160, 0.664);
+}
+
+.dark-mode td ,th{
+  border-color: rgba(161, 160, 160, 0.315);
+}
+
+.dark-mode tr:nth-child(even) {
+  background-color: rgb(31 34 35)
+}
+
+.dark-mode .p-button {
+    color: rgb(232, 230, 227);
+    background-color: rgb(53, 148, 56);
+    border-color: rgb(45, 88, 46);
+}
+
+.dark-mode .p-inputtext:enabled:focus {
+  box-shadow: rgb(34 79 46) 0px 0px 0px 0.2rem; 
+  border-color:rgb(36, 182, 43)
+}
+
+.dark-mode small {
+  color:  #5d656df6;
+}
+
+.dark-mode .p-message.p-message-success {
+    background-color: rgb(31, 68, 41);
+    border-color: rgb(59, 131, 62);
+    color: rgb(168, 215, 169);
+}
+
+.dark-mode .p-message.p-message-error {
+    background-color: rgb(81, 0, 8);
+    border-color: rgb(186, 0, 19);
+    color: rgb(255, 124, 137);
+}
+.dark-mode .p-message.p-message-info {
+    background-color: rgb(7, 128, 183);
+    border-color:rgb(7, 128, 183) !important;
+    color: rgb(255, 255, 255) !important; 
 }
 </style>

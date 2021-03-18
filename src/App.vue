@@ -2,26 +2,22 @@
 <div class="p-grid p-jc-center" :class="{'dark-mode': darkMode}">
   <div class="p-col-12 p-md-7 p-lg-6 p-sm-12">
     <Card>
-    
     <template #title>
        <div class="p-fluid p-formgrid p-grid ">
-          <div class=" p-md-10 ">
-            <label for="vl_boleto" class="p-d-flex p-jc-end">calc</label>
-          </div>
+          <div class="p-d-flex p-jc-left p-md-10 ">Calc</div>
           <div class="darkThemeBtn p-md-2">
             <i :class="!darkMode? 'pi pi-moon': 'pi pi-sun'" style="fontSize: 1.5rem" title="Dark mode" @click="toggleDarkMode()"></i>
           </div>
       </div>
-
     </template>
     <template #content>
       <div class="p-fluid p-formgrid p-grid ">
           <div class="p-field p-col p-md-6 ">
-            <label for="vl_boleto" class="p-d-flex p-ai-start">Valor do boleto:</label>
+            <label for="boleto" class="p-d-flex p-ai-start">Valor do boleto:</label>
             <div class="p-md-12">
-               <InputNumber id="vl_boleto" class="p-inputtext-sm"
+               <InputNumber id="boleto" class="p-inputtext-sm"
                 :class="formState.class"
-                @keyup="setBoletoValue"
+                @keyup="setInputValue"
                 v-model="boleto"
                 mode="currency" 
                 currency="BRL" 
@@ -51,12 +47,13 @@
       </div>
       <div class="p-fluid p-formgrid p-grid">
         <div class="p-field p-col p-md-6">
-           <label for="username" class="p-col-10 p-d-flex p-ai-start">Quantidade de parcelas:
+           <label for="parcel" class="p-col-10 p-d-flex p-ai-start">Quantidade de parcelas:
              <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Parcelamento de 2 a 12 parcelas."></i>
            </label>
           <div class="p-md-12">
-               <InputNumber id="vl_parcela" class="p-inputtext-sm" 
+               <InputNumber id="parcel" class="p-inputtext-sm" 
                v-model="parcel"
+               @keyup="setInputValue"
                mode="decimal" 
                showButtons 
                :min="2" 
@@ -66,13 +63,14 @@
           </div>
         </div>
         <div class="p-field p-col p-md-6 ">
-           <label for="username" class="p-col-10 p-d-flex p-ai-start">Percentual de cashback:
+           <label for="percent" class="p-col-10 p-d-flex p-ai-start">Percentual de cashback:
              <i class="pi pi-question-circle p-ml-1 p-ml-1" title="Percentual de cashback de acordo com a quantidade de parcelas informadas na promoção"></i>
            </label>
           <div class="p-md-12">
                <InputNumber id="percent" class="p-inputtext-sm" 
                v-model="percent"
-               mode="decimal" 
+               @keyup="setInputValue"
+               mode="decimal"
                showButtons 
                :min="0" 
                :max="100"
@@ -120,7 +118,6 @@
               </td>
             </tr>
           </tfoot>
-
         </table>
      </div>
     </template>
@@ -128,9 +125,8 @@
         <Button :disabled="!formState.isValid" icon="pi pi-check" label="Calcular" @click="calc"/>
         <Button icon="pi pi-circle-off" label="Limpar" @click="resetForm" class="p-button-secondary" style="margin-left: .5em" />
     </template>
-</Card>
-</div>
-
+    </Card>
+  </div>
 </div>
 </template>
 
@@ -220,7 +216,6 @@ export default {
           result.msg = `O valor das taxas é superior ao valor de cashback. ${result.values.diff}`;
         }
       }
-      
     }
 
     const resetForm = () =>{
@@ -232,15 +227,21 @@ export default {
     }
 
     //Para corrigir bind do componente, que só ativa quando perde foco do input
-    function setBoletoValue(e){
-       boleto.value = parseFloat(e.target.value.substring(3).replaceAll('.',''))
+    const setInputValue = (e) => {
+      switch(e.target.id){
+        case 'boleto': boleto.value = parseFloat(e.target.value.substring(3).replaceAll('.','')) || null
+          break;
+        case 'percent': percent.value = parseFloat(e.target.value.replace('%','')) || null
+          break;
+        case 'parcel': parcel.value = parseFloat(e.target.value) || null
+          break
+        default: ''
+      }
     }
 
-    function toggleDarkMode(){
-      darkMode.value = !darkMode.value;
-    }
-
-    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setBoletoValue,calcMax,toggleDarkMode,darkMode}
+    const toggleDarkMode = () => darkMode.value = !darkMode.value;
+    
+    return {boleto,max_cashback,parcel,percent,calc,result,resetForm,formState,setInputValue,calcMax,toggleDarkMode,darkMode}
   }
 }
 
@@ -258,7 +259,7 @@ export default {
 table {
   border-collapse: collapse;
   border-style: hidden;
-   table-layout:fixed;
+  table-layout:fixed;
   border-spacing: 0;
   width: 100%;
 }
@@ -353,6 +354,6 @@ small {
 .dark-mode .p-message.p-message-info {
     background-color: rgb(7, 128, 183);
     border-color:rgb(7, 128, 183) !important;
-    color: rgb(255, 255, 255) !important; 
+    color: rgb(181, 175, 166) !important; 
 }
 </style>
